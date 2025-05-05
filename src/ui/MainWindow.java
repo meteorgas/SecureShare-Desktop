@@ -38,13 +38,13 @@ public class MainWindow extends JFrame {
         // Create title label
         JLabel titleLabel = new JLabel(Config.APP_TITLE);
         titleLabel.setFont(UIStyleUtils.TITLE_FONT.deriveFont(20f));
-        titleLabel.setForeground(UIStyleUtils.SECTION_TITLE_COLOR);
+        titleLabel.setForeground(UIStyleUtils.TEXT_PRIMARY); // Use TEXT_PRIMARY as per color palette
         titleLabel.setHorizontalAlignment(JLabel.CENTER);
 
         // Add a subtle border to the title
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(189, 195, 199)),
+            BorderFactory.createMatteBorder(0, 0, 1, 0, UIStyleUtils.SECONDARY_GRAY), // Use SECONDARY_GRAY as per color palette
             BorderFactory.createEmptyBorder(0, 0, 15, 0)
         ));
         titlePanel.add(titleLabel, BorderLayout.CENTER);

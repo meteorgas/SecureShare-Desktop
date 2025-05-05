@@ -48,25 +48,16 @@ public class TransferHistoryPanel extends JPanel {
         historyTable = new JTable(tableModel);
         historyTable.setFillsViewportHeight(true);
         historyTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        historyTable.setFont(UIStyleUtils.REGULAR_FONT);
-        historyTable.getTableHeader().setFont(UIStyleUtils.SECTION_FONT);
-        historyTable.setRowHeight(25); // Increase row height for better readability
-        historyTable.setShowGrid(false); // Remove grid lines for cleaner look
-        historyTable.setIntercellSpacing(new Dimension(5, 5)); // Add spacing between cells
 
-        // Alternate row colors for better readability
-        historyTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        // Apply the new table styling from Task 9
+        UIStyleUtils.styleTable(historyTable);
 
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(245, 245, 245));
-                }
-
-                return c;
-            }
-        });
+        // Set column widths with equal spacing as per Task 9
+        int totalWidth = 530; // Approximate width of the table
+        historyTable.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.4)); // File name (40%)
+        historyTable.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.3)); // Date & Time (30%)
+        historyTable.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.15)); // Size (15%)
+        historyTable.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.15)); // Direction (15%)
 
         // Center-align all columns except the first one
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
@@ -75,15 +66,10 @@ public class TransferHistoryPanel extends JPanel {
             historyTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        // Set column widths
-        historyTable.getColumnModel().getColumn(0).setPreferredWidth(200); // File name
-        historyTable.getColumnModel().getColumn(1).setPreferredWidth(150); // Date & Time
-        historyTable.getColumnModel().getColumn(2).setPreferredWidth(80);  // Size
-        historyTable.getColumnModel().getColumn(3).setPreferredWidth(80);  // Direction
-
-        // Add table to a scroll pane with styled border
+        // Add table to a scroll pane with styled border using SECONDARY_GRAY
         JScrollPane scrollPane = new JScrollPane(historyTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199), 1));
+        scrollPane.setBorder(BorderFactory.createLineBorder(UIStyleUtils.SECONDARY_GRAY, 1));
+        scrollPane.getViewport().setBackground(Color.WHITE); // Ensure viewport background is white
         add(scrollPane, BorderLayout.CENTER);
 
         // Create button panel with spacing

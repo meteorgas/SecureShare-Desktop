@@ -91,7 +91,7 @@ public class SenderWindow extends JFrame {
 
         JPanel fileSelectionPanel = new JPanel(new BorderLayout(8, 8));
         fileLabel = new JLabel("No file selected");
-        fileLabel.setForeground(Color.GRAY);
+        fileLabel.setForeground(UIStyleUtils.TEXT_SECONDARY); // Use consistent color as per Task 8
         UIStyleUtils.styleLabel(fileLabel);
         fileSelectionPanel.add(fileLabel, BorderLayout.CENTER);
 
@@ -99,11 +99,9 @@ public class SenderWindow extends JFrame {
         UIStyleUtils.styleButton(selectFileButton);
         fileSelectionPanel.add(selectFileButton, BorderLayout.EAST);
 
-        // Add drag-drop instruction
+        // Add drag-drop instruction with helper text styling as per Task 8
         JLabel dragDropLabel = new JLabel("or drag and drop a file here");
-        dragDropLabel.setHorizontalAlignment(JLabel.CENTER);
-        dragDropLabel.setForeground(new Color(127, 140, 141));
-        UIStyleUtils.styleLabel(dragDropLabel);
+        UIStyleUtils.styleHelperLabel(dragDropLabel);
 
         filePanel.add(fileSelectionPanel, BorderLayout.CENTER);
         filePanel.add(dragDropLabel, BorderLayout.SOUTH);

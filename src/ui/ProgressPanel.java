@@ -31,17 +31,17 @@ public class ProgressPanel extends JPanel {
         logArea.setWrapStyleWord(true);
         UIStyleUtils.styleTextArea(logArea);
 
-        // Create scroll pane with styled border
+        // Create scroll pane with styled border using SECONDARY_GRAY
         scrollPane = new JScrollPane(logArea);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199), 1));
+        scrollPane.setBorder(BorderFactory.createLineBorder(UIStyleUtils.SECONDARY_GRAY, 1));
 
         // Create progress bar with styling (initially invisible)
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
         progressBar.setVisible(false);
         progressBar.setFont(UIStyleUtils.REGULAR_FONT);
-        progressBar.setForeground(new Color(46, 204, 113)); // Green color for progress
+        progressBar.setForeground(UIStyleUtils.PRIMARY_BLUE); // Use PRIMARY_BLUE as per color palette
 
         // Create clear log button with styling
         clearLogButton = new JButton("Clear Log");
