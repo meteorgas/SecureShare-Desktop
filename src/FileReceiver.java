@@ -4,8 +4,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.nio.file.Paths;
 
 /**
@@ -14,6 +13,7 @@ import java.nio.file.Paths;
  */
 public class FileReceiver extends JFrame {
     private static final int DEFAULT_PORT = 5050;
+    private static final int DISCOVERY_PORT = 8888;
 
     private JTextField portField;
     private JTextField saveDirectoryField;
@@ -26,7 +26,9 @@ public class FileReceiver extends JFrame {
     private String saveDirectory;
     private ServerSocket serverSocket;
     private ReceiverThread receiverThread;
+    private DiscoveryThread discoveryThread;
     private boolean isRunning = false;
+    private DatagramSocket discoverySocket;
 
     /**
      * Constructor that creates and initializes the GUI.
@@ -42,6 +44,17 @@ public class FileReceiver extends JFrame {
         }
 
         initializeUI();
+
+        // Add window listener to clean up resources when window is closed
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                stopDiscoveryService();
+                if (isRunning) {
+                    stopReceiving();
+                }
+            }
+        });
     }
 
     /**
@@ -202,6 +215,9 @@ public class FileReceiver extends JFrame {
         if (receiverThread != null && !receiverThread.isDone()) {
             receiverThread.cancel(true);
         }
+
+        // Stop the discovery service
+        stopDiscoveryService();
 
         isRunning = false;
 
@@ -373,5 +389,108 @@ public class FileReceiver extends JFrame {
         SwingUtilities.invokeLater(() -> {
             setVisible(true);
         });
+
+        // Start the discovery thread
+        startDiscoveryService();
+    }
+
+    /**
+     * Starts the UDP discovery service.
+     */
+    private void startDiscoveryService() {
+        try {
+            // Close any existing discovery socket
+            if (discoverySocket != null && !discoverySocket.isClosed()) {
+                discoverySocket.close();
+            }
+
+            // Create a new discovery socket
+            discoverySocket = new DatagramSocket(DISCOVERY_PORT);
+            discoveryThread = new DiscoveryThread();
+            discoveryThread.execute();
+            log("Discovery service started on port " + DISCOVERY_PORT);
+        } catch (SocketException e) {
+            log("Error starting discovery service: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Stops the UDP discovery service.
+     */
+    private void stopDiscoveryService() {
+        if (discoveryThread != null && !discoveryThread.isDone()) {
+            discoveryThread.cancel(true);
+        }
+
+        if (discoverySocket != null && !discoverySocket.isClosed()) {
+            discoverySocket.close();
+        }
+
+        log("Discovery service stopped");
+    }
+
+    /**
+     * SwingWorker class to handle UDP discovery in a background thread.
+     */
+    private class DiscoveryThread extends SwingWorker<Void, String> {
+        @Override
+        protected Void doInBackground() throws Exception {
+            try {
+                byte[] buffer = new byte[1024];
+
+                while (!isCancelled()) {
+                    try {
+                        // Prepare to receive a packet
+                        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+                        // Wait for a discovery packet
+                        discoverySocket.receive(packet);
+
+                        // Convert the packet data to a string
+                        String message = new String(packet.getData(), 0, packet.getLength());
+
+                        // Check if it's a discovery message
+                        if (message.equals("FILEBEAM_DISCOVERY")) {
+                            // Get the sender's address and port
+                            InetAddress senderAddress = packet.getAddress();
+                            int senderPort = packet.getPort();
+
+                            publish("Discovery request from: " + senderAddress.getHostAddress());
+
+                            // Get the local hostname
+                            String deviceName = InetAddress.getLocalHost().getHostName();
+
+                            // Create the response message
+                            String response = "RECEIVER_AVAILABLE|" + deviceName + "|" + portField.getText().trim();
+                            byte[] responseData = response.getBytes();
+
+                            // Send the response back to the sender
+                            DatagramPacket responsePacket = new DatagramPacket(
+                                responseData, responseData.length, senderAddress, senderPort);
+                            discoverySocket.send(responsePacket);
+
+                            publish("Sent availability response to: " + senderAddress.getHostAddress());
+                        }
+                    } catch (IOException e) {
+                        if (!isCancelled()) {
+                            publish("Discovery error: " + e.getMessage());
+                        }
+                    }
+                }
+            } finally {
+                if (discoverySocket != null && !discoverySocket.isClosed()) {
+                    discoverySocket.close();
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void process(java.util.List<String> chunks) {
+            for (String message : chunks) {
+                log(message);
+            }
+        }
     }
 }

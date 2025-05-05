@@ -4,7 +4,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * FileSender class for selecting and sending files over a network connection.
@@ -13,14 +15,38 @@ import java.net.Socket;
 public class FileSender extends JFrame {
     private static final int DEFAULT_PORT = 5050;
     private static final String DEFAULT_IP = "127.0.0.1";
+    private static final int DISCOVERY_PORT = 8888;
+    private static final int DISCOVERY_TIMEOUT = 3000; // 3 seconds
 
     private JTextField ipAddressField;
     private JTextField portField;
     private JButton selectFileButton;
     private JButton sendFileButton;
+    private JButton searchDevicesButton;
     private JTextArea logArea;
     private JScrollPane scrollPane;
     private File selectedFile;
+
+    // For device discovery
+    private List<ReceiverDevice> discoveredDevices = new ArrayList<>();
+
+    // Class to represent a discovered receiver device
+    private static class ReceiverDevice {
+        private final String name;
+        private final String ipAddress;
+        private final int port;
+
+        public ReceiverDevice(String name, String ipAddress, int port) {
+            this.name = name;
+            this.ipAddress = ipAddress;
+            this.port = port;
+        }
+
+        @Override
+        public String toString() {
+            return name + " (" + ipAddress + ")";
+        }
+    }
 
     /**
      * Constructor that creates and initializes the GUI.
@@ -56,9 +82,11 @@ public class FileSender extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         selectFileButton = new JButton("Select File");
         sendFileButton = new JButton("Send File");
+        searchDevicesButton = new JButton("Search Devices");
         sendFileButton.setEnabled(false); // Disable until file is selected
 
         buttonPanel.add(selectFileButton);
+        buttonPanel.add(searchDevicesButton);
         buttonPanel.add(sendFileButton);
 
         // Create log area
@@ -92,6 +120,13 @@ public class FileSender extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 sendFile();
+            }
+        });
+
+        searchDevicesButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                searchDevices();
             }
         });
 
@@ -238,6 +273,146 @@ public class FileSender extends JFrame {
             // Re-enable buttons after transfer
             selectFileButton.setEnabled(true);
             sendFileButton.setEnabled(selectedFile != null);
+        }
+    }
+
+    /**
+     * Searches for available receiver devices on the network.
+     */
+    private void searchDevices() {
+        // Clear previous discoveries
+        discoveredDevices.clear();
+
+        // Disable the search button during discovery
+        searchDevicesButton.setEnabled(false);
+
+        log("Searching for receiver devices...");
+
+        // Create and execute the discovery worker
+        DeviceDiscoveryWorker worker = new DeviceDiscoveryWorker();
+        worker.execute();
+    }
+
+    /**
+     * Displays a dialog with discovered devices and allows the user to select one.
+     */
+    private void showDeviceSelectionDialog() {
+        if (discoveredDevices.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "No receiver devices found. Please ensure receivers are running and try again.",
+                "No Devices Found",
+                JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        ReceiverDevice[] devices = discoveredDevices.toArray(new ReceiverDevice[0]);
+        ReceiverDevice selectedDevice = (ReceiverDevice) JOptionPane.showInputDialog(
+            this,
+            "Select a receiver device:",
+            "Device Selection",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            devices,
+            devices[0]);
+
+        if (selectedDevice != null) {
+            // Update the IP and port fields with the selected device
+            ipAddressField.setText(selectedDevice.ipAddress);
+            portField.setText(String.valueOf(selectedDevice.port));
+            log("Selected device: " + selectedDevice);
+        }
+    }
+
+    /**
+     * SwingWorker class to handle device discovery in a background thread.
+     */
+    private class DeviceDiscoveryWorker extends SwingWorker<Void, String> {
+        @Override
+        protected Void doInBackground() {
+            try (DatagramSocket socket = new DatagramSocket()) {
+                // Enable broadcast
+                socket.setBroadcast(true);
+
+                // Set timeout
+                socket.setSoTimeout(DISCOVERY_TIMEOUT);
+
+                // Create the discovery message
+                byte[] sendData = "FILEBEAM_DISCOVERY".getBytes();
+
+                // Send to broadcast address
+                InetAddress broadcastAddress = InetAddress.getByName("255.255.255.255");
+                DatagramPacket sendPacket = new DatagramPacket(
+                    sendData, sendData.length, broadcastAddress, DISCOVERY_PORT);
+
+                publish("Sending discovery broadcast...");
+                socket.send(sendPacket);
+
+                // Listen for responses until timeout
+                byte[] receiveData = new byte[1024];
+
+                long endTime = System.currentTimeMillis() + DISCOVERY_TIMEOUT;
+
+                while (System.currentTimeMillis() < endTime) {
+                    try {
+                        // Prepare to receive a response
+                        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+
+                        // Wait for a response
+                        socket.receive(receivePacket);
+
+                        // Process the response
+                        String response = new String(receivePacket.getData(), 0, receivePacket.getLength());
+
+                        // Check if it's a valid response
+                        if (response.startsWith("RECEIVER_AVAILABLE|")) {
+                            String[] parts = response.split("\\|");
+                            if (parts.length >= 3) {
+                                String deviceName = parts[1];
+                                String ipAddress = receivePacket.getAddress().getHostAddress();
+                                int port;
+
+                                try {
+                                    port = Integer.parseInt(parts[2]);
+                                } catch (NumberFormatException e) {
+                                    port = DEFAULT_PORT;
+                                }
+
+                                // Create a new device and add it to the list
+                                ReceiverDevice device = new ReceiverDevice(deviceName, ipAddress, port);
+                                discoveredDevices.add(device);
+
+                                publish("Found receiver: " + device);
+                            }
+                        }
+                    } catch (SocketTimeoutException e) {
+                        // Timeout is expected, just continue
+                        break;
+                    }
+                }
+
+                publish("Discovery completed. Found " + discoveredDevices.size() + " receiver(s).");
+
+            } catch (IOException e) {
+                publish("Error during device discovery: " + e.getMessage());
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void process(java.util.List<String> chunks) {
+            for (String message : chunks) {
+                log(message);
+            }
+        }
+
+        @Override
+        protected void done() {
+            // Re-enable the search button
+            searchDevicesButton.setEnabled(true);
+
+            // Show the device selection dialog
+            showDeviceSelectionDialog();
         }
     }
 
