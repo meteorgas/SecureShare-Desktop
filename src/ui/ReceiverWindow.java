@@ -5,6 +5,7 @@ import network.PeerDiscovery;
 import utils.Config;
 import utils.FileUtils;
 import utils.TransferHistoryManager;
+import utils.UIStyleUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -50,47 +51,59 @@ public class ReceiverWindow extends JFrame {
     private void initializeUI() {
         setTitle(Config.RECEIVER_TITLE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(500, 500);
+        setSize(550, 550);
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout(10, 10));
-        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        mainPanel.setLayout(new BorderLayout(15, 15));
+        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         // Create a vertical panel for controls
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
-        controlPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
+        controlPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
 
         // Create server settings panel
-        JPanel serverPanel = new JPanel(new GridLayout(1, 2, 5, 5));
-        serverPanel.setBorder(BorderFactory.createTitledBorder("Server Settings"));
+        JPanel serverPanel = new JPanel(new GridLayout(1, 2, 8, 8));
+        serverPanel.setBorder(UIStyleUtils.createSectionBorder("Server Settings"));
 
-        serverPanel.add(new JLabel("Listening Port:"));
+        JLabel portLabel = new JLabel("Listening Port:");
+        UIStyleUtils.styleLabel(portLabel);
+        serverPanel.add(portLabel);
+
         portField = new JTextField(String.valueOf(Config.DEFAULT_PORT));
+        UIStyleUtils.styleTextField(portField);
         serverPanel.add(portField);
 
         // Create directory panel
-        JPanel directoryPanel = new JPanel(new BorderLayout(5, 5));
-        directoryPanel.setBorder(BorderFactory.createTitledBorder("Save Location"));
+        JPanel directoryPanel = new JPanel(new BorderLayout(8, 8));
+        directoryPanel.setBorder(UIStyleUtils.createSectionBorder("Save Location"));
 
-        JPanel dirInputPanel = new JPanel(new BorderLayout(5, 5));
+        JLabel saveLabel = new JLabel("Files will be saved to:");
+        UIStyleUtils.styleLabel(saveLabel);
+        directoryPanel.add(saveLabel, BorderLayout.NORTH);
+
+        JPanel dirInputPanel = new JPanel(new BorderLayout(8, 8));
         saveDirectoryField = new JTextField(saveDirectory);
         saveDirectoryField.setEditable(false);
+        UIStyleUtils.styleTextField(saveDirectoryField);
         dirInputPanel.add(saveDirectoryField, BorderLayout.CENTER);
 
         chooseDirButton = new JButton("Browse...");
+        UIStyleUtils.styleButton(chooseDirButton);
         dirInputPanel.add(chooseDirButton, BorderLayout.EAST);
 
-        directoryPanel.add(new JLabel("Files will be saved to:"), BorderLayout.NORTH);
         directoryPanel.add(dirInputPanel, BorderLayout.CENTER);
 
         // Create control buttons panel
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 0));
-        buttonPanel.setBorder(BorderFactory.createTitledBorder("Server Control"));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 15, 0));
+        buttonPanel.setBorder(UIStyleUtils.createSectionBorder("Server Control"));
 
         startButton = new JButton("Start Receiver");
+        UIStyleUtils.styleButton(startButton);
+
         stopButton = new JButton("Stop Receiver");
+        UIStyleUtils.styleButton(stopButton);
         stopButton.setEnabled(false);
 
         buttonPanel.add(startButton);
@@ -98,12 +111,12 @@ public class ReceiverWindow extends JFrame {
 
         // Create progress panel with title border
         progressPanel = new ProgressPanel();
-        progressPanel.setBorder(BorderFactory.createTitledBorder("Transfer Progress"));
+        progressPanel.setBorder(UIStyleUtils.createSectionBorder("Transfer Progress"));
 
         // Create history panel
         historyManager = new TransferHistoryManager();
         historyPanel = new TransferHistoryPanel(historyManager);
-        historyPanel.setBorder(BorderFactory.createTitledBorder("Transfer History"));
+        historyPanel.setBorder(UIStyleUtils.createSectionBorder("Transfer History"));
 
         // Create split pane for progress and history
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, progressPanel, historyPanel);
@@ -113,9 +126,9 @@ public class ReceiverWindow extends JFrame {
 
         // Add components to control panel in vertical order
         controlPanel.add(serverPanel);
-        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Spacer
         controlPanel.add(directoryPanel);
-        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Spacer
         controlPanel.add(buttonPanel);
 
         // Add components to main panel

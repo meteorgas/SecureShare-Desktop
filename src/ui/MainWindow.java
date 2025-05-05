@@ -1,6 +1,7 @@
 package ui;
 
 import utils.Config;
+import utils.UIStyleUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,29 +28,42 @@ public class MainWindow extends JFrame {
     private void initializeUI() {
         setTitle(Config.APP_TITLE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 200);
+        setSize(450, 250);
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout(10, 10));
-        mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        mainPanel.setLayout(new BorderLayout(15, 15));
+        mainPanel.setBorder(new EmptyBorder(25, 25, 25, 25));
 
         // Create title label
         JLabel titleLabel = new JLabel(Config.APP_TITLE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setFont(UIStyleUtils.TITLE_FONT.deriveFont(20f));
+        titleLabel.setForeground(UIStyleUtils.SECTION_TITLE_COLOR);
         titleLabel.setHorizontalAlignment(JLabel.CENTER);
 
-        // Create button panel
-        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 10, 10));
+        // Add a subtle border to the title
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(189, 195, 199)),
+            BorderFactory.createEmptyBorder(0, 0, 15, 0)
+        ));
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
+
+        // Create button panel with a titled border
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 15, 15));
+        buttonPanel.setBorder(UIStyleUtils.createSectionBorder("Choose Mode"));
 
         JButton senderButton = new JButton("Send a File");
+        UIStyleUtils.styleButton(senderButton);
+
         JButton receiverButton = new JButton("Receive Files");
+        UIStyleUtils.styleButton(receiverButton);
 
         buttonPanel.add(senderButton);
         buttonPanel.add(receiverButton);
 
         // Add components to main panel
-        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
 
         // Add main panel to frame

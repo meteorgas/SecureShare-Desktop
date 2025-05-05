@@ -5,10 +5,14 @@ import network.PeerDiscovery;
 import utils.Config;
 import utils.FileUtils;
 import utils.TransferHistoryManager;
+import utils.UIStyleUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -49,50 +53,70 @@ public class SenderWindow extends JFrame {
     private void initializeUI() {
         setTitle(Config.SENDER_TITLE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(500, 500);
+        setSize(550, 550);
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout(10, 10));
-        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        mainPanel.setLayout(new BorderLayout(15, 15));
+        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         // Create a vertical panel for controls
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
-        controlPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
+        controlPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
 
         // Create connection panel
-        JPanel connectionPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        connectionPanel.setBorder(BorderFactory.createTitledBorder("Connection Settings"));
+        JPanel connectionPanel = new JPanel(new GridLayout(2, 2, 8, 8));
+        connectionPanel.setBorder(UIStyleUtils.createSectionBorder("Connection Settings"));
 
-        connectionPanel.add(new JLabel("Receiver IP Address:"));
+        JLabel ipLabel = new JLabel("Receiver IP Address:");
+        UIStyleUtils.styleLabel(ipLabel);
+        connectionPanel.add(ipLabel);
+
         ipAddressField = new JTextField(Config.DEFAULT_IP);
+        UIStyleUtils.styleTextField(ipAddressField);
         connectionPanel.add(ipAddressField);
 
-        connectionPanel.add(new JLabel("Port:"));
+        JLabel portLabel = new JLabel("Port:");
+        UIStyleUtils.styleLabel(portLabel);
+        connectionPanel.add(portLabel);
+
         portField = new JTextField(String.valueOf(Config.DEFAULT_PORT));
+        UIStyleUtils.styleTextField(portField);
         connectionPanel.add(portField);
 
         // Create file selection panel
-        JPanel filePanel = new JPanel(new BorderLayout(5, 5));
-        filePanel.setBorder(BorderFactory.createTitledBorder("File Selection"));
+        JPanel filePanel = new JPanel(new BorderLayout(8, 8));
+        filePanel.setBorder(UIStyleUtils.createSectionBorder("File Selection"));
 
-        JPanel fileSelectionPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel fileSelectionPanel = new JPanel(new BorderLayout(8, 8));
         fileLabel = new JLabel("No file selected");
         fileLabel.setForeground(Color.GRAY);
+        UIStyleUtils.styleLabel(fileLabel);
         fileSelectionPanel.add(fileLabel, BorderLayout.CENTER);
 
         selectFileButton = new JButton("Select File");
+        UIStyleUtils.styleButton(selectFileButton);
         fileSelectionPanel.add(selectFileButton, BorderLayout.EAST);
 
+        // Add drag-drop instruction
+        JLabel dragDropLabel = new JLabel("or drag and drop a file here");
+        dragDropLabel.setHorizontalAlignment(JLabel.CENTER);
+        dragDropLabel.setForeground(new Color(127, 140, 141));
+        UIStyleUtils.styleLabel(dragDropLabel);
+
         filePanel.add(fileSelectionPanel, BorderLayout.CENTER);
+        filePanel.add(dragDropLabel, BorderLayout.SOUTH);
 
         // Create action panel
-        JPanel actionPanel = new JPanel(new GridLayout(1, 2, 10, 0));
-        actionPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
+        JPanel actionPanel = new JPanel(new GridLayout(1, 2, 15, 0));
+        actionPanel.setBorder(UIStyleUtils.createSectionBorder("Actions"));
 
         searchDevicesButton = new JButton("Search Devices");
+        UIStyleUtils.styleButton(searchDevicesButton);
+
         sendFileButton = new JButton("Send File");
+        UIStyleUtils.styleButton(sendFileButton);
         sendFileButton.setEnabled(false); // Disable until file is selected
 
         actionPanel.add(searchDevicesButton);
@@ -100,12 +124,12 @@ public class SenderWindow extends JFrame {
 
         // Create progress panel with title border
         progressPanel = new ProgressPanel();
-        progressPanel.setBorder(BorderFactory.createTitledBorder("Transfer Progress"));
+        progressPanel.setBorder(UIStyleUtils.createSectionBorder("Transfer Progress"));
 
         // Create history panel
         historyManager = new TransferHistoryManager();
         historyPanel = new TransferHistoryPanel(historyManager);
-        historyPanel.setBorder(BorderFactory.createTitledBorder("Transfer History"));
+        historyPanel.setBorder(UIStyleUtils.createSectionBorder("Transfer History"));
 
         // Create split pane for progress and history
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, progressPanel, historyPanel);
@@ -115,9 +139,9 @@ public class SenderWindow extends JFrame {
 
         // Add components to control panel in vertical order
         controlPanel.add(connectionPanel);
-        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Spacer
         controlPanel.add(filePanel);
-        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Spacer
         controlPanel.add(actionPanel);
 
         // Add components to main panel
@@ -126,6 +150,9 @@ public class SenderWindow extends JFrame {
 
         // Add main panel to frame
         add(mainPanel);
+
+        // Set up drag and drop
+        setupDragAndDrop(filePanel);
 
         // Add action listeners
         selectFileButton.addActionListener(new ActionListener() {
@@ -159,6 +186,80 @@ public class SenderWindow extends JFrame {
 
         // Initial log message
         progressPanel.log("Ready to send files. Please select a file and enter receiver details.");
+    }
+
+    /**
+     * Sets up drag and drop functionality for the specified component.
+     * 
+     * @param component The component to enable drag and drop on
+     */
+    private void setupDragAndDrop(JComponent component) {
+        new DropTarget(component, new DropTargetAdapter() {
+            @Override
+            public void dragEnter(DropTargetDragEvent dtde) {
+                // Check if the dragged data is a file
+                if (isDraggedDataFile(dtde)) {
+                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
+                    component.setBorder(BorderFactory.createCompoundBorder(
+                        UIStyleUtils.createSectionBorder("File Selection"),
+                        BorderFactory.createLineBorder(new Color(52, 152, 219), 2)
+                    ));
+                } else {
+                    dtde.rejectDrag();
+                }
+            }
+
+            @Override
+            public void dragExit(DropTargetEvent dte) {
+                // Reset the border when drag exits
+                component.setBorder(UIStyleUtils.createSectionBorder("File Selection"));
+            }
+
+            @Override
+            public void drop(DropTargetDropEvent dtde) {
+                try {
+                    // Reset the border
+                    component.setBorder(UIStyleUtils.createSectionBorder("File Selection"));
+
+                    // Accept the drop
+                    dtde.acceptDrop(DnDConstants.ACTION_COPY);
+
+                    // Get the dropped files
+                    Transferable transferable = dtde.getTransferable();
+
+                    @SuppressWarnings("unchecked")
+                    List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+
+                    if (!files.isEmpty()) {
+                        // Use the first file
+                        File droppedFile = files.get(0);
+
+                        // Set as selected file
+                        selectedFile = droppedFile;
+                        fileLabel.setText(selectedFile.getName());
+                        fileLabel.setForeground(Color.BLACK);
+
+                        progressPanel.log("File dropped: " + selectedFile.getAbsolutePath());
+                        sendFileButton.setEnabled(true);
+                    }
+
+                    dtde.dropComplete(true);
+                } catch (Exception e) {
+                    progressPanel.log("Error handling dropped file: " + e.getMessage());
+                    dtde.dropComplete(false);
+                }
+            }
+        });
+    }
+
+    /**
+     * Checks if the dragged data is a file.
+     * 
+     * @param dtde The drag event
+     * @return true if the dragged data is a file, false otherwise
+     */
+    private boolean isDraggedDataFile(DropTargetDragEvent dtde) {
+        return dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
     }
 
     /**

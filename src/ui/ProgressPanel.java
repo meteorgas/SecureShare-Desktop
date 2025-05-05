@@ -1,5 +1,7 @@
 package ui;
 
+import utils.UIStyleUtils;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -19,24 +21,31 @@ public class ProgressPanel extends JPanel {
      * Creates a new ProgressPanel with a text area for logs and a progress bar.
      */
     public ProgressPanel() {
-        setLayout(new BorderLayout(5, 5));
-        setBorder(new EmptyBorder(5, 5, 5, 5));
+        setLayout(new BorderLayout(8, 8));
+        setBorder(new EmptyBorder(8, 8, 8, 8));
 
-        // Create log area
+        // Create log area with styling
         logArea = new JTextArea();
         logArea.setEditable(false);
         logArea.setLineWrap(true);
         logArea.setWrapStyleWord(true);
+        UIStyleUtils.styleTextArea(logArea);
+
+        // Create scroll pane with styled border
         scrollPane = new JScrollPane(logArea);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199), 1));
 
-        // Create progress bar (initially invisible)
+        // Create progress bar with styling (initially invisible)
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
         progressBar.setVisible(false);
+        progressBar.setFont(UIStyleUtils.REGULAR_FONT);
+        progressBar.setForeground(new Color(46, 204, 113)); // Green color for progress
 
-        // Create clear log button
+        // Create clear log button with styling
         clearLogButton = new JButton("Clear Log");
+        UIStyleUtils.styleButton(clearLogButton);
         clearLogButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -48,10 +57,11 @@ public class ProgressPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(clearLogButton);
 
-        // Create a panel for the progress bar and button
-        JPanel southPanel = new JPanel(new BorderLayout());
+        // Create a panel for the progress bar and button with spacing
+        JPanel southPanel = new JPanel(new BorderLayout(8, 0));
         southPanel.add(progressBar, BorderLayout.CENTER);
         southPanel.add(buttonPanel, BorderLayout.EAST);
+        southPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
         // Add components to panel
         add(scrollPane, BorderLayout.CENTER);
