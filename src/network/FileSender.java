@@ -1,6 +1,8 @@
 package network;
 
 import utils.Config;
+import utils.TransferHistoryManager;
+import utils.TransferRecord;
 
 import javax.swing.*;
 import java.io.*;
@@ -13,18 +15,21 @@ import java.util.function.Consumer;
 public class FileSender {
     private final Consumer<String> logCallback;
     private final Consumer<Integer> progressCallback;
-    
+    private final TransferHistoryManager historyManager;
+
     /**
      * Creates a new FileSender with callbacks for logging and progress updates.
      * 
      * @param logCallback Callback for log messages
      * @param progressCallback Callback for progress updates
+     * @param historyManager Manager for tracking transfer history
      */
-    public FileSender(Consumer<String> logCallback, Consumer<Integer> progressCallback) {
+    public FileSender(Consumer<String> logCallback, Consumer<Integer> progressCallback, TransferHistoryManager historyManager) {
         this.logCallback = logCallback;
         this.progressCallback = progressCallback;
+        this.historyManager = historyManager;
     }
-    
+
     /**
      * Sends a file to a receiver.
      * 
@@ -37,7 +42,7 @@ public class FileSender {
         FileSenderWorker worker = new FileSenderWorker(file, ipAddress, port);
         worker.execute();
     }
-    
+
     /**
      * Logs a message using the log callback.
      * 
@@ -48,7 +53,7 @@ public class FileSender {
             logCallback.accept(message);
         }
     }
-    
+
     /**
      * Updates progress using the progress callback.
      * 
@@ -59,7 +64,7 @@ public class FileSender {
             progressCallback.accept(percentage);
         }
     }
-    
+
     /**
      * SwingWorker class to handle file sending in a background thread.
      */
@@ -120,6 +125,12 @@ public class FileSender {
 
                 outputStream.flush();
                 publish("File sent successfully!");
+
+                // Record the transfer in history
+                if (historyManager != null) {
+                    TransferRecord record = new TransferRecord(file.getName(), fileSize, TransferRecord.Direction.SENT);
+                    historyManager.addTransferRecord(record);
+                }
 
             } catch (IOException e) {
                 publish("Error sending file: " + e.getMessage());

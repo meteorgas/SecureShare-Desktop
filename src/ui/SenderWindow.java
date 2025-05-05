@@ -4,6 +4,7 @@ import network.FileSender;
 import network.PeerDiscovery;
 import utils.Config;
 import utils.FileUtils;
+import utils.TransferHistoryManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,10 +27,13 @@ public class SenderWindow extends JFrame {
     private JButton searchDevicesButton;
     private JLabel fileLabel;
     private ProgressPanel progressPanel;
+    private TransferHistoryPanel historyPanel;
+    private JSplitPane splitPane;
 
     private File selectedFile;
     private PeerDiscovery peerDiscovery;
     private FileSender fileSender;
+    private TransferHistoryManager historyManager;
 
     /**
      * Constructor that creates and initializes the GUI.
@@ -98,6 +102,17 @@ public class SenderWindow extends JFrame {
         progressPanel = new ProgressPanel();
         progressPanel.setBorder(BorderFactory.createTitledBorder("Transfer Progress"));
 
+        // Create history panel
+        historyManager = new TransferHistoryManager();
+        historyPanel = new TransferHistoryPanel(historyManager);
+        historyPanel.setBorder(BorderFactory.createTitledBorder("Transfer History"));
+
+        // Create split pane for progress and history
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, progressPanel, historyPanel);
+        splitPane.setResizeWeight(0.5); // Equal distribution
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setContinuousLayout(true);
+
         // Add components to control panel in vertical order
         controlPanel.add(connectionPanel);
         controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
@@ -107,7 +122,7 @@ public class SenderWindow extends JFrame {
 
         // Add components to main panel
         mainPanel.add(controlPanel, BorderLayout.NORTH);
-        mainPanel.add(progressPanel, BorderLayout.CENTER);
+        mainPanel.add(splitPane, BorderLayout.CENTER);
 
         // Add main panel to frame
         add(mainPanel);
@@ -154,8 +169,8 @@ public class SenderWindow extends JFrame {
         peerDiscovery = new PeerDiscovery();
         peerDiscovery.addLogListener(progressPanel::log);
 
-        // Create file sender
-        fileSender = new FileSender(progressPanel::log, progressPanel::updateProgress);
+        // Create file sender with history manager
+        fileSender = new FileSender(progressPanel::log, progressPanel::updateProgress, historyManager);
     }
 
     /**

@@ -2,6 +2,8 @@ package network;
 
 import utils.Config;
 import utils.FileUtils;
+import utils.TransferHistoryManager;
+import utils.TransferRecord;
 
 import javax.swing.*;
 import java.io.*;
@@ -17,27 +19,30 @@ public class FileReceiver {
     private final Consumer<String> logCallback;
     private final Consumer<Integer> progressCallback;
     private final String saveDirectory;
-    
+    private final TransferHistoryManager historyManager;
+
     private ServerSocket serverSocket;
     private ReceiverThread receiverThread;
     private boolean isRunning = false;
-    
+
     /**
      * Creates a new FileReceiver with callbacks for logging and progress updates.
      * 
      * @param saveDirectory The directory where received files will be saved
      * @param logCallback Callback for log messages
      * @param progressCallback Callback for progress updates
+     * @param historyManager Manager for tracking transfer history
      */
-    public FileReceiver(String saveDirectory, Consumer<String> logCallback, Consumer<Integer> progressCallback) {
+    public FileReceiver(String saveDirectory, Consumer<String> logCallback, Consumer<Integer> progressCallback, TransferHistoryManager historyManager) {
         this.saveDirectory = saveDirectory;
         this.logCallback = logCallback;
         this.progressCallback = progressCallback;
-        
+        this.historyManager = historyManager;
+
         // Ensure the save directory exists
         FileUtils.ensureDirectoryExists(saveDirectory);
     }
-    
+
     /**
      * Starts the receiver to listen for incoming file transfers.
      * 
@@ -49,7 +54,7 @@ public class FileReceiver {
             log("Receiver is already running.");
             return false;
         }
-        
+
         try {
             // Start the receiver thread
             receiverThread = new ReceiverThread(port);
@@ -60,7 +65,7 @@ public class FileReceiver {
             return false;
         }
     }
-    
+
     /**
      * Stops the receiver and closes all connections.
      */
@@ -69,9 +74,9 @@ public class FileReceiver {
             log("Receiver is not running.");
             return;
         }
-        
+
         log("Stopping receiver...");
-        
+
         // Close the server socket
         if (serverSocket != null && !serverSocket.isClosed()) {
             try {
@@ -80,16 +85,16 @@ public class FileReceiver {
                 log("Error closing server socket: " + e.getMessage());
             }
         }
-        
+
         // Cancel the receiver thread
         if (receiverThread != null && !receiverThread.isDone()) {
             receiverThread.cancel(true);
         }
-        
+
         isRunning = false;
         log("Receiver stopped.");
     }
-    
+
     /**
      * Checks if the receiver is currently running.
      * 
@@ -98,7 +103,7 @@ public class FileReceiver {
     public boolean isRunning() {
         return isRunning;
     }
-    
+
     /**
      * Logs a message using the log callback.
      * 
@@ -109,7 +114,7 @@ public class FileReceiver {
             logCallback.accept(message);
         }
     }
-    
+
     /**
      * Updates progress using the progress callback.
      * 
@@ -120,7 +125,7 @@ public class FileReceiver {
             progressCallback.accept(percentage);
         }
     }
-    
+
     /**
      * SwingWorker class to handle file receiving in a background thread.
      */
@@ -201,6 +206,12 @@ public class FileReceiver {
 
                                 publish("File received successfully!");
                                 publish("Saved to: " + filePath);
+
+                                // Record the transfer in history
+                                if (historyManager != null) {
+                                    TransferRecord record = new TransferRecord(fileName, fileSize, TransferRecord.Direction.RECEIVED);
+                                    historyManager.addTransferRecord(record);
+                                }
                             }
 
                         } finally {

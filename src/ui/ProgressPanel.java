@@ -3,6 +3,8 @@ package ui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * A reusable panel for displaying progress information during file transfers.
@@ -11,6 +13,7 @@ public class ProgressPanel extends JPanel {
     private JTextArea logArea;
     private JScrollPane scrollPane;
     private JProgressBar progressBar;
+    private JButton clearLogButton;
 
     /**
      * Creates a new ProgressPanel with a text area for logs and a progress bar.
@@ -18,7 +21,7 @@ public class ProgressPanel extends JPanel {
     public ProgressPanel() {
         setLayout(new BorderLayout(5, 5));
         setBorder(new EmptyBorder(5, 5, 5, 5));
-        
+
         // Create log area
         logArea = new JTextArea();
         logArea.setEditable(false);
@@ -26,17 +29,35 @@ public class ProgressPanel extends JPanel {
         logArea.setWrapStyleWord(true);
         scrollPane = new JScrollPane(logArea);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        
+
         // Create progress bar (initially invisible)
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
         progressBar.setVisible(false);
-        
+
+        // Create clear log button
+        clearLogButton = new JButton("Clear Log");
+        clearLogButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                clearLog();
+            }
+        });
+
+        // Create a panel for the button
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(clearLogButton);
+
+        // Create a panel for the progress bar and button
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.add(progressBar, BorderLayout.CENTER);
+        southPanel.add(buttonPanel, BorderLayout.EAST);
+
         // Add components to panel
         add(scrollPane, BorderLayout.CENTER);
-        add(progressBar, BorderLayout.SOUTH);
+        add(southPanel, BorderLayout.SOUTH);
     }
-    
+
     /**
      * Adds a message to the log area.
      * 
@@ -49,7 +70,7 @@ public class ProgressPanel extends JPanel {
             logArea.setCaretPosition(logArea.getDocument().getLength());
         });
     }
-    
+
     /**
      * Updates the progress bar with a new percentage value.
      * 
@@ -63,7 +84,7 @@ public class ProgressPanel extends JPanel {
             progressBar.setValue(percentage);
         });
     }
-    
+
     /**
      * Resets the progress bar to 0% and hides it.
      */
@@ -73,7 +94,7 @@ public class ProgressPanel extends JPanel {
             progressBar.setVisible(false);
         });
     }
-    
+
     /**
      * Gets the log text area component.
      * 
@@ -82,7 +103,7 @@ public class ProgressPanel extends JPanel {
     public JTextArea getLogArea() {
         return logArea;
     }
-    
+
     /**
      * Gets the progress bar component.
      * 
@@ -90,5 +111,14 @@ public class ProgressPanel extends JPanel {
      */
     public JProgressBar getProgressBar() {
         return progressBar;
+    }
+
+    /**
+     * Clears the log text area.
+     */
+    public void clearLog() {
+        SwingUtilities.invokeLater(() -> {
+            logArea.setText("");
+        });
     }
 }

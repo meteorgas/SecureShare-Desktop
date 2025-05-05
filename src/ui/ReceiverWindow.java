@@ -4,6 +4,7 @@ import network.FileReceiver;
 import network.PeerDiscovery;
 import utils.Config;
 import utils.FileUtils;
+import utils.TransferHistoryManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -23,10 +24,13 @@ public class ReceiverWindow extends JFrame {
     private JButton startButton;
     private JButton stopButton;
     private ProgressPanel progressPanel;
+    private TransferHistoryPanel historyPanel;
+    private JSplitPane splitPane;
 
     private String saveDirectory;
     private PeerDiscovery peerDiscovery;
     private FileReceiver fileReceiver;
+    private TransferHistoryManager historyManager;
     private boolean isRunning = false;
 
     /**
@@ -96,6 +100,17 @@ public class ReceiverWindow extends JFrame {
         progressPanel = new ProgressPanel();
         progressPanel.setBorder(BorderFactory.createTitledBorder("Transfer Progress"));
 
+        // Create history panel
+        historyManager = new TransferHistoryManager();
+        historyPanel = new TransferHistoryPanel(historyManager);
+        historyPanel.setBorder(BorderFactory.createTitledBorder("Transfer History"));
+
+        // Create split pane for progress and history
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, progressPanel, historyPanel);
+        splitPane.setResizeWeight(0.5); // Equal distribution
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setContinuousLayout(true);
+
         // Add components to control panel in vertical order
         controlPanel.add(serverPanel);
         controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
@@ -105,7 +120,7 @@ public class ReceiverWindow extends JFrame {
 
         // Add components to main panel
         mainPanel.add(controlPanel, BorderLayout.NORTH);
-        mainPanel.add(progressPanel, BorderLayout.CENTER);
+        mainPanel.add(splitPane, BorderLayout.CENTER);
 
         // Add main panel to frame
         add(mainPanel);
@@ -152,8 +167,8 @@ public class ReceiverWindow extends JFrame {
         peerDiscovery = new PeerDiscovery();
         peerDiscovery.addLogListener(progressPanel::log);
 
-        // Create file receiver
-        fileReceiver = new FileReceiver(saveDirectory, progressPanel::log, progressPanel::updateProgress);
+        // Create file receiver with history manager
+        fileReceiver = new FileReceiver(saveDirectory, progressPanel::log, progressPanel::updateProgress, historyManager);
     }
 
     /**
@@ -170,7 +185,7 @@ public class ReceiverWindow extends JFrame {
             // Update the file receiver with the new directory
             if (fileReceiver != null) {
                 // We need to create a new FileReceiver with the updated directory
-                fileReceiver = new FileReceiver(saveDirectory, progressPanel::log, progressPanel::updateProgress);
+                fileReceiver = new FileReceiver(saveDirectory, progressPanel::log, progressPanel::updateProgress, historyManager);
             }
         }
     }
