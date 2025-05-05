@@ -6,7 +6,7 @@ import java.net.Socket;
  * FileSender class for selecting and sending files over a network connection.
  */
 public class FileSender {
-    private static final int PORT = 5000;
+    private static final int PORT = 5050;
     
     /**
      * Allows user to select a file and send it to a specified IP address.
