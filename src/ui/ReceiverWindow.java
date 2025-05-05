@@ -23,55 +23,68 @@ public class ReceiverWindow extends JFrame {
     private JButton startButton;
     private JButton stopButton;
     private ProgressPanel progressPanel;
-    
+
     private String saveDirectory;
     private PeerDiscovery peerDiscovery;
     private FileReceiver fileReceiver;
     private boolean isRunning = false;
-    
+
     /**
      * Constructor that creates and initializes the GUI.
      */
     public ReceiverWindow() {
         // Use default directory if none provided
         this.saveDirectory = Config.DEFAULT_SAVE_DIRECTORY;
-        
+
         initializeUI();
         initializeNetworking();
     }
-    
+
     /**
      * Sets up the GUI components.
      */
     private void initializeUI() {
         setTitle(Config.RECEIVER_TITLE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(500, 400);
+        setSize(500, 500);
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout(10, 10));
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Create input panel for port and save directory
-        JPanel inputPanel = new JPanel(new GridLayout(2, 3, 5, 5));
+        // Create a vertical panel for controls
+        JPanel controlPanel = new JPanel();
+        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
+        controlPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        inputPanel.add(new JLabel("Listening Port:"));
+        // Create server settings panel
+        JPanel serverPanel = new JPanel(new GridLayout(1, 2, 5, 5));
+        serverPanel.setBorder(BorderFactory.createTitledBorder("Server Settings"));
+
+        serverPanel.add(new JLabel("Listening Port:"));
         portField = new JTextField(String.valueOf(Config.DEFAULT_PORT));
-        inputPanel.add(portField);
-        // Empty cell for alignment
-        inputPanel.add(new JLabel());
+        serverPanel.add(portField);
 
-        inputPanel.add(new JLabel("Save Directory:"));
+        // Create directory panel
+        JPanel directoryPanel = new JPanel(new BorderLayout(5, 5));
+        directoryPanel.setBorder(BorderFactory.createTitledBorder("Save Location"));
+
+        JPanel dirInputPanel = new JPanel(new BorderLayout(5, 5));
         saveDirectoryField = new JTextField(saveDirectory);
         saveDirectoryField.setEditable(false);
-        inputPanel.add(saveDirectoryField);
+        dirInputPanel.add(saveDirectoryField, BorderLayout.CENTER);
 
         chooseDirButton = new JButton("Browse...");
-        inputPanel.add(chooseDirButton);
+        dirInputPanel.add(chooseDirButton, BorderLayout.EAST);
 
-        // Create button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        directoryPanel.add(new JLabel("Files will be saved to:"), BorderLayout.NORTH);
+        directoryPanel.add(dirInputPanel, BorderLayout.CENTER);
+
+        // Create control buttons panel
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        buttonPanel.setBorder(BorderFactory.createTitledBorder("Server Control"));
+
         startButton = new JButton("Start Receiver");
         stopButton = new JButton("Stop Receiver");
         stopButton.setEnabled(false);
@@ -79,15 +92,19 @@ public class ReceiverWindow extends JFrame {
         buttonPanel.add(startButton);
         buttonPanel.add(stopButton);
 
-        // Create progress panel
+        // Create progress panel with title border
         progressPanel = new ProgressPanel();
+        progressPanel.setBorder(BorderFactory.createTitledBorder("Transfer Progress"));
+
+        // Add components to control panel in vertical order
+        controlPanel.add(serverPanel);
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(directoryPanel);
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(buttonPanel);
 
         // Add components to main panel
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(inputPanel, BorderLayout.NORTH);
-        topPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(controlPanel, BorderLayout.NORTH);
         mainPanel.add(progressPanel, BorderLayout.CENTER);
 
         // Add main panel to frame
@@ -114,7 +131,7 @@ public class ReceiverWindow extends JFrame {
                 stopReceiving();
             }
         });
-        
+
         // Add window listener to clean up resources when window is closed
         addWindowListener(new WindowAdapter() {
             @Override
@@ -126,7 +143,7 @@ public class ReceiverWindow extends JFrame {
         // Initial log message
         progressPanel.log("Ready to receive files. Click 'Start Receiver' to begin listening.");
     }
-    
+
     /**
      * Initializes the networking components.
      */
@@ -134,22 +151,22 @@ public class ReceiverWindow extends JFrame {
         // Create peer discovery
         peerDiscovery = new PeerDiscovery();
         peerDiscovery.addLogListener(progressPanel::log);
-        
+
         // Create file receiver
         fileReceiver = new FileReceiver(saveDirectory, progressPanel::log, progressPanel::updateProgress);
     }
-    
+
     /**
      * Opens a directory chooser dialog to select a save location.
      */
     private void chooseDirectory() {
         String selectedDir = FileUtils.selectDirectory((JComponent)getContentPane(), "Choose Save Directory");
-        
+
         if (selectedDir != null) {
             saveDirectory = selectedDir;
             saveDirectoryField.setText(saveDirectory);
             progressPanel.log("Save directory set to: " + saveDirectory);
-            
+
             // Update the file receiver with the new directory
             if (fileReceiver != null) {
                 // We need to create a new FileReceiver with the updated directory
@@ -157,7 +174,7 @@ public class ReceiverWindow extends JFrame {
             }
         }
     }
-    
+
     /**
      * Starts the server to listen for incoming file transfers.
      */
@@ -181,10 +198,14 @@ public class ReceiverWindow extends JFrame {
         startButton.setEnabled(false);
         stopButton.setEnabled(true);
 
+        // Reset progress bar and show waiting message
+        progressPanel.resetProgress();
+        progressPanel.log("Waiting for files...");
+
         // Start the receiver
         if (fileReceiver.start(port)) {
             isRunning = true;
-            
+
             // Start the discovery service
             peerDiscovery.startReceiver(port);
         } else {
@@ -195,7 +216,7 @@ public class ReceiverWindow extends JFrame {
             stopButton.setEnabled(false);
         }
     }
-    
+
     /**
      * Stops the server and closes all connections.
      */
@@ -204,22 +225,22 @@ public class ReceiverWindow extends JFrame {
             progressPanel.log("Receiver is not running.");
             return;
         }
-        
+
         // Stop the receiver
         fileReceiver.stop();
-        
+
         // Stop the discovery service
         peerDiscovery.stop();
-        
+
         isRunning = false;
-        
+
         // Re-enable input controls
         portField.setEnabled(true);
         chooseDirButton.setEnabled(true);
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
     }
-    
+
     /**
      * Cleans up resources when the window is closed.
      */

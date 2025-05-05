@@ -24,6 +24,7 @@ public class SenderWindow extends JFrame {
     private JButton selectFileButton;
     private JButton sendFileButton;
     private JButton searchDevicesButton;
+    private JLabel fileLabel;
     private ProgressPanel progressPanel;
 
     private File selectedFile;
@@ -44,43 +45,68 @@ public class SenderWindow extends JFrame {
     private void initializeUI() {
         setTitle(Config.SENDER_TITLE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(500, 400);
+        setSize(500, 500);
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout(10, 10));
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Create input panel for IP and port
-        JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        inputPanel.add(new JLabel("Receiver IP Address:"));
+        // Create a vertical panel for controls
+        JPanel controlPanel = new JPanel();
+        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
+        controlPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
+
+        // Create connection panel
+        JPanel connectionPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+        connectionPanel.setBorder(BorderFactory.createTitledBorder("Connection Settings"));
+
+        connectionPanel.add(new JLabel("Receiver IP Address:"));
         ipAddressField = new JTextField(Config.DEFAULT_IP);
-        inputPanel.add(ipAddressField);
+        connectionPanel.add(ipAddressField);
 
-        inputPanel.add(new JLabel("Port:"));
+        connectionPanel.add(new JLabel("Port:"));
         portField = new JTextField(String.valueOf(Config.DEFAULT_PORT));
-        inputPanel.add(portField);
+        connectionPanel.add(portField);
 
-        // Create button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        // Create file selection panel
+        JPanel filePanel = new JPanel(new BorderLayout(5, 5));
+        filePanel.setBorder(BorderFactory.createTitledBorder("File Selection"));
+
+        JPanel fileSelectionPanel = new JPanel(new BorderLayout(5, 5));
+        fileLabel = new JLabel("No file selected");
+        fileLabel.setForeground(Color.GRAY);
+        fileSelectionPanel.add(fileLabel, BorderLayout.CENTER);
+
         selectFileButton = new JButton("Select File");
-        sendFileButton = new JButton("Send File");
+        fileSelectionPanel.add(selectFileButton, BorderLayout.EAST);
+
+        filePanel.add(fileSelectionPanel, BorderLayout.CENTER);
+
+        // Create action panel
+        JPanel actionPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        actionPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
+
         searchDevicesButton = new JButton("Search Devices");
+        sendFileButton = new JButton("Send File");
         sendFileButton.setEnabled(false); // Disable until file is selected
 
-        buttonPanel.add(selectFileButton);
-        buttonPanel.add(searchDevicesButton);
-        buttonPanel.add(sendFileButton);
+        actionPanel.add(searchDevicesButton);
+        actionPanel.add(sendFileButton);
 
-        // Create progress panel
+        // Create progress panel with title border
         progressPanel = new ProgressPanel();
+        progressPanel.setBorder(BorderFactory.createTitledBorder("Transfer Progress"));
+
+        // Add components to control panel in vertical order
+        controlPanel.add(connectionPanel);
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(filePanel);
+        controlPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacer
+        controlPanel.add(actionPanel);
 
         // Add components to main panel
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(inputPanel, BorderLayout.NORTH);
-        topPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(controlPanel, BorderLayout.NORTH);
         mainPanel.add(progressPanel, BorderLayout.CENTER);
 
         // Add main panel to frame
@@ -139,9 +165,17 @@ public class SenderWindow extends JFrame {
         selectedFile = FileUtils.selectFile((JComponent)getContentPane(), "Select a file to send");
 
         if (selectedFile != null) {
+            // Update the file label
+            fileLabel.setText(selectedFile.getName());
+            fileLabel.setForeground(Color.BLACK);
+
             progressPanel.log("Selected file: " + selectedFile.getAbsolutePath());
             sendFileButton.setEnabled(true);
         } else {
+            // Reset the file label
+            fileLabel.setText("No file selected");
+            fileLabel.setForeground(Color.GRAY);
+
             progressPanel.log("File selection cancelled.");
         }
     }
@@ -170,6 +204,10 @@ public class SenderWindow extends JFrame {
         selectFileButton.setEnabled(false);
         sendFileButton.setEnabled(false);
         searchDevicesButton.setEnabled(false);
+
+        // Reset progress bar and show sending message
+        progressPanel.resetProgress();
+        progressPanel.log("Sending file: " + selectedFile.getName() + "...");
 
         // Send the file
         fileSender.sendFile(selectedFile, ipAddress, port);

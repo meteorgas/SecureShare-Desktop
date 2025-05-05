@@ -1,8 +1,5 @@
 package ui;
 
-import network.FileReceiver;
-import network.FileSender;
-import network.PeerDiscovery;
 import utils.Config;
 
 import javax.swing.*;
@@ -75,52 +72,22 @@ public class MainWindow extends JFrame {
     }
 
     /**
-     * Launches the FileSender GUI.
-     * This is a temporary implementation until SenderWindow is created.
+     * Launches the SenderWindow GUI.
      */
     private void launchSender() {
-        // For now, we'll use the original FileSender class directly
-        // This will be replaced with SenderWindow in the future
-        try {
-            // Create a new instance of the original FileSender class
-            Class<?> fileSenderClass = Class.forName("FileSender");
-            Object fileSender = fileSenderClass.newInstance();
-
-            // Call the start method
-            fileSenderClass.getMethod("start").invoke(fileSender);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                "Error launching sender: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+        SwingUtilities.invokeLater(() -> {
+            SenderWindow senderWindow = new SenderWindow();
+            senderWindow.setVisible(true);
+        });
     }
 
     /**
-     * Launches the FileReceiver GUI.
-     * This is a temporary implementation until ReceiverWindow is created.
+     * Launches the ReceiverWindow GUI.
      */
     private void launchReceiver() {
-        // For now, we'll use the original FileReceiver class directly
-        // This will be replaced with ReceiverWindow in the future
-        try {
-            // Use default directory if none provided
-            String saveDirectory = Config.DEFAULT_SAVE_DIRECTORY;
-
-            // Create a new instance of the original FileReceiver class
-            Class<?> fileReceiverClass = Class.forName("FileReceiver");
-            Object fileReceiver = fileReceiverClass.getConstructor(String.class)
-                .newInstance(saveDirectory);
-
-            // Call the start method
-            fileReceiverClass.getMethod("start").invoke(fileReceiver);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                "Error launching receiver: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+        SwingUtilities.invokeLater(() -> {
+            ReceiverWindow receiverWindow = new ReceiverWindow();
+            receiverWindow.setVisible(true);
+        });
     }
 }
