@@ -116,11 +116,14 @@ public class SenderWindow extends JFrame {
         clearFileButton = new JButton("Clear Selection");
         UIStyleUtils.styleButton(clearFileButton);
         clearFileButton.setEnabled(false); // Disable until file is selected
+        applyDisabledButtonStyle(clearFileButton);
         buttonPanel.add(clearFileButton);
 
         // Select file button
         selectFileButton = new JButton("Select File");
         UIStyleUtils.styleButton(selectFileButton);
+        selectFileButton.setEnabled(true);
+        applyDisabledButtonStyle(selectFileButton);
         buttonPanel.add(selectFileButton);
 
         // Add components to file selection panel
@@ -145,6 +148,8 @@ public class SenderWindow extends JFrame {
         sendFileButton = new JButton("Send File");
         UIStyleUtils.styleButton(sendFileButton);
         sendFileButton.setEnabled(false); // Disable until file is selected
+        applyDisabledButtonStyle(sendFileButton);
+        actionPanel.add(sendFileButton);
 
         actionPanel.add(searchDevicesButton);
         actionPanel.add(sendFileButton);
@@ -220,6 +225,40 @@ public class SenderWindow extends JFrame {
 
         // Initial log message
         progressPanel.log("Ready to send files. Please select a file and enter receiver details.");
+    }
+
+    /**
+     * Hooks into the enabled property of a button to give it a
+     * muted, semi-transparent style when disabled.
+     */
+    private void applyDisabledButtonStyle(JButton button) {
+        // Make sure we can paint a custom background
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+
+        // Listen for enable/disable changes
+        button.addPropertyChangeListener("enabled", evt -> {
+            boolean isEnabled = (Boolean) evt.getNewValue();
+            if (isEnabled) {
+                // Restore normal style
+                button.setBackground(UIStyleUtils.BUTTON_BACKGROUND);
+                button.setForeground(UIStyleUtils.BUTTON_FOREGROUND);
+                button.setOpaque(true);
+                button.putClientProperty("alpha", 1.0f);
+            } else {
+                // Apply disabled look: 50% opacity, gray-blue bg, soft gray text, no shadow
+                Color bg = new Color(0xA9, 0xC1, 0xE8, 128);   // #A9C1E8 @ 50% alpha
+                Color fg = new Color(0xCC, 0xCC, 0xCC);        // #CCCCCC
+                button.setBackground(bg);
+                button.setForeground(fg);
+                button.setOpaque(true);
+            }
+            // Force repaint so the new colors take effect immediately
+            button.repaint();
+        });
+
+        // Trigger the initial style application in case it's already disabled
+        button.firePropertyChange("enabled", !button.isEnabled(), button.isEnabled());
     }
 
     /**

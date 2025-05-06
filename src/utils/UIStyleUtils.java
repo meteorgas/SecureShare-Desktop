@@ -22,6 +22,10 @@ public class UIStyleUtils {
     public static final Color TEXT_PRIMARY = new Color(0x202124); // #202124 - Titles, main text
     public static final Color TEXT_SECONDARY = new Color(0x5F6368); // #5F6368 - Helper text, hints
 
+    // Button colors for normal state
+    public static final Color BUTTON_BACKGROUND = PRIMARY_BLUE;
+    public static final Color BUTTON_FOREGROUND = Color.WHITE;
+
     // Button hover color
     public static final Color BUTTON_HOVER = new Color(0x6EA5F8); // #6EA5F8
 
