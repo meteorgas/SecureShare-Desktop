@@ -51,7 +51,7 @@ public class ReceiverWindow extends JFrame {
     private void initializeUI() {
         setTitle(Config.RECEIVER_TITLE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(550, 550);
+        setSize(750, 850);
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel();
