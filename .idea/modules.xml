@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/FileBeam.iml" filepath="$PROJECT_DIR$/FileBeam.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SecureShare.iml" filepath="$PROJECT_DIR$/SecureShare.iml" />
     </modules>
   </component>
 </project>
