@@ -10,7 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Main window for the FileBeam application.
+ * Main window for the SecureShare application.
  * Provides a graphical interface to choose between sender and receiver modes.
  */
 public class MainWindow extends JFrame {

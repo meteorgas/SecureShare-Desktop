@@ -3,7 +3,7 @@ import ui.MainWindow;
 import javax.swing.*;
 
 /**
- * Main class for the FileBeam application.
+ * Main class for the SecureShare application.
  * Handles application startup and configuration.
  */
 public class Main {

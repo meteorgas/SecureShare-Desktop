@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 /**
- * Utility class for UI styling in the FileBeam application.
+ * Utility class for UI styling in the SecureShare application.
  * Provides methods for consistent styling across the application.
  */
 public class UIStyleUtils {

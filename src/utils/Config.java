@@ -1,7 +1,7 @@
 package utils;
 
 /**
- * Configuration constants for the FileBeam application.
+ * Configuration constants for the SecureShare application.
  */
 public class Config {
     // Network configuration
@@ -16,16 +16,16 @@ public class Config {
     public static final int PROGRESS_UPDATE_BYTES = 262144; // 256KB
 
     // Discovery protocol messages
-    public static final String DISCOVERY_REQUEST = "FILEBEAM_DISCOVERY";
+    public static final String DISCOVERY_REQUEST = "SECURESHARE_DISCOVERY";
     public static final String DISCOVERY_RESPONSE_PREFIX = "RECEIVER_AVAILABLE|";
 
     // Default save directory
-    public static final String DEFAULT_SAVE_DIRECTORY = System.getProperty("user.home") + "/Downloads/FileBeam";
+    public static final String DEFAULT_SAVE_DIRECTORY = System.getProperty("user.home") + "/Downloads/SecureShare";
 
     // UI configuration
-    public static final String APP_TITLE = "FileBeam - LAN File Transfer Application";
-    public static final String SENDER_TITLE = "FileBeam - File Sender";
-    public static final String RECEIVER_TITLE = "FileBeam - File Receiver";
+    public static final String APP_TITLE = "SecureShare";
+    public static final String SENDER_TITLE = "SecureShare - File Sender";
+    public static final String RECEIVER_TITLE = "SecureShare - File Receiver";
 
     // History configuration
     public static final String HISTORY_FILE = "transfer_history.csv";

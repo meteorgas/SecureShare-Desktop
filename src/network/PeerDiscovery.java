@@ -11,7 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
- * Handles peer discovery for the FileBeam application using UDP broadcast.
+ * Handles peer discovery for the SecureShare application using UDP broadcast.
  */
 public class PeerDiscovery {
     

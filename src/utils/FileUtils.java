@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.io.File;
 
 /**
- * Utility methods for file operations in the FileBeam application.
+ * Utility methods for file operations in the SecureShare application.
  */
 public class FileUtils {
     
